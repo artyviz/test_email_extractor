@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🔍 NEXOMATE AUTOMATED EMAIL EXTRACTOR
 
 **Problem Solved:** Your founder was using Explee's free version which only gives website URLs. He had to manually visit each website, find the email, copy it, and paste it into a sheet. This tool automates ALL of that.
@@ -182,3 +183,7 @@ curl -X POST http://localhost:5000/extract \
 ---
 
 **Built for Nexomate** | Replaces manual copy-paste with full automation
+=======
+# test_email_extractor-
+testing automated py 
+>>>>>>> b83cff2e129174cf4f8050a155219746438158f0
