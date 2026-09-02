@@ -1,0 +1,105 @@
+{
+  "name": "Nexomate Google Sheets Email Extractor Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "list"
+        },
+        "event": "rowAdded"
+      },
+      "name": "Google Sheets Trigger (New Row Added)",
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5000/extract-from-urls",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "[\"{{ $json['Website URL'] }}\"]"
+      },
+      "name": "Call Email Extractor API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Extracted Email": "={{ $json.leads[0] ? $json.leads[0].email : 'Not Found' }}",
+            "Quality Score": "={{ $json.leads[0] ? $json.leads[0].email_score : 0 }}",
+            "Phone": "={{ $json.leads[0] ? $json.leads[0].phone : '' }}",
+            "Status": "={{ $json.leads[0] ? 'Extracted' : 'Failed' }}"
+          }
+        }
+      },
+      "name": "Update Google Sheet Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        680,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Google Sheets Trigger (New Row Added)": {
+      "main": [
+        [
+          {
+            "node": "Call Email Extractor API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Email Extractor API": {
+      "main": [
+        [
+          {
+            "node": "Update Google Sheet Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

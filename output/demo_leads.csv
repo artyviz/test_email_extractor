@@ -1,0 +1,6 @@
+company_name,website,email,email_score,email_source,phone,address,industry,location,contact_name,title,source,status,notes,extracted_at
+SunPower Texas,https://sunpowertexas.com,john.martinez@sunpowertexas.com,95,contact page,+1-512-555-0142,"Austin, TX 78701",solar,texas,John Martinez,Owner,email_extractor,new,,2026-09-02 19:15:15
+SunPower Texas,https://sunpowertexas.com,sales@sunpowertexas.com,70,footer,+1-512-555-0142,"Austin, TX 78701",solar,texas,,,email_extractor,new,,2026-09-02 19:15:15
+GreenHome Solar,https://greenhomesolar.com,sarah.chen@greenhomesolar.com,92,about page,+1-713-555-0198,"Houston, TX 77001",solar,texas,Sarah Chen,Sales Director,email_extractor,new,,2026-09-02 19:15:15
+Lone Star Panels,https://lonestarpanels.com,info@lonestarpanels.com,65,contact page,+1-214-555-0176,"Dallas, TX 75201",solar,texas,,,email_extractor,new,,2026-09-02 19:15:15
+Lone Star Panels,https://lonestarpanels.com,mike.rodriguez@lonestarpanels.com,88,team page,+1-214-555-0176,"Dallas, TX 75201",solar,texas,Mike Rodriguez,Founder,email_extractor,new,,2026-09-02 19:15:15

@@ -1,0 +1,150 @@
+{
+  "name": "Nexomate Email Extractor Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Configuration for daily extraction\nconst targets = [\n  { query: 'solar installation companies texas', industry: 'solar', location: 'texas' },\n  { query: 'interior design firms london', industry: 'interior_design', location: 'london' },\n];\nreturn targets.map(t => ({ json: t }));"
+      },
+      "name": "Target Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5000/extract",
+        "body": {
+          "query": "={{ $json.query }}",
+          "industry": "={{ $json.industry }}",
+          "location": "={{ $json.location }}",
+          "max_results": 20
+        }
+      },
+      "name": "Call Email Extractor API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process and validate results\nconst leads = $input.first().json.leads || [];\nreturn leads.map(lead => ({\n  json: {\n    ...lead,\n    client_id: 'nexomate_prospecting',\n    source: 'automated_extractor',\n    lead_score: lead.email_score >= 80 ? 'HOT' : lead.email_score >= 50 ? 'WARM' : 'COLD',\n    status: 'new',\n    created_at: new Date().toISOString()\n  }\n}));"
+      },
+      "name": "Process Leads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "leads",
+        "columns": "company_name,website,email,phone,address,industry,location,lead_score,status,source,created_at"
+      },
+      "name": "Save to PostgreSQL",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "#prospecting-alerts",
+        "text": "\ud83c\udfaf Daily Email Extraction Complete!\n\n\u2022 Industry: {{ $json.industry }}\n\u2022 Location: {{ $json.location }}\n\u2022 New leads found: {{ $json.count }}\n\u2022 High quality (80+): {{ $json.high_quality }}\n\nReady for outreach! \ud83d\ude80"
+      },
+      "name": "Slack Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [
+        1050,
+        500
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Target Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Target Config": {
+      "main": [
+        [
+          {
+            "node": "Call Email Extractor API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Email Extractor API": {
+      "main": [
+        [
+          {
+            "node": "Process Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Leads": {
+      "main": [
+        [
+          {
+            "node": "Save to PostgreSQL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

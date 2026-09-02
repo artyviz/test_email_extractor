@@ -1,0 +1,139 @@
+{
+  "name": "Nexomate n8n Form Email Extractor Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "⚡ Nexomate Email Extractor",
+        "formDescription": "Paste Explee website URLs below to automatically extract prospect emails.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Website URLs (one per line)",
+              "fieldType": "textarea",
+              "requiredField": true,
+              "placeholder": "sunpowertexas.com\ngreenhomesolar.com\nlonestarpanels.com"
+            },
+            {
+              "fieldLabel": "Industry Hint (Optional)",
+              "placeholder": "e.g. solar, interior_design"
+            },
+            {
+              "fieldLabel": "Location Hint (Optional)",
+              "placeholder": "e.g. texas, london"
+            }
+          ]
+        },
+        "options": {
+          "respondWithOptions": {
+            "values": {
+              "respondWith": "text",
+              "text": "✨ Extraction complete! Your leads have been extracted and added to your Google Sheet / CRM."
+            }
+          }
+        }
+      },
+      "name": "n8n Form Trigger",
+      "type": "n8n-nodes-base.n8nFormTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract URLs from textarea\nconst rawUrls = $json['Website URLs (one per line)'] || '';\nconst urls = rawUrls.split('\\n').map(u => u.trim()).filter(u => u.length > 0);\n\nreturn {\n  json: {\n    urls: urls,\n    industry: $json['Industry Hint (Optional)'] || '',\n    location: $json['Location Hint (Optional)'] || ''\n  }\n};"
+      },
+      "name": "Parse URLs Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5000/extract-from-urls",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.urls) }}"
+      },
+      "name": "Call Email Extractor API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Company": "={{ $json.leads[0] ? $json.leads[0].company_name : '' }}",
+            "Website": "={{ $json.leads[0] ? $json.leads[0].website : '' }}",
+            "Email": "={{ $json.leads[0] ? $json.leads[0].email : '' }}",
+            "Score": "={{ $json.leads[0] ? $json.leads[0].email_score : 0 }}",
+            "Phone": "={{ $json.leads[0] ? $json.leads[0].phone : '' }}"
+          }
+        }
+      },
+      "name": "Save to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        850,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "n8n Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse URLs Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse URLs Input": {
+      "main": [
+        [
+          {
+            "node": "Call Email Extractor API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Email Extractor API": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
